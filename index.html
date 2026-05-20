@@ -533,10 +533,7 @@ body {
           <span>📊</span> Boshqaruv paneli
         </button>
         <button class="sidebar-item" data-view="admin-calendar" onclick="showAdminView('calendar')">
-          <span>📅</span> Kalendar
-        </button>
-        <button class="sidebar-item" data-view="admin-all" onclick="showAdminView('all')">
-          <span>📋</span> Barcha postlar
+          <span>📅</span> Umumiy ma'lumot
         </button>
       </div>
       <div class="sidebar-section">
@@ -598,12 +595,12 @@ body {
         <div id="pending-list"></div>
       </div>
 
-      <!-- CALENDAR VIEW -->
+      <!-- CALENDAR / UMUMIY MA'LUMOT VIEW -->
       <div class="admin-view" id="admin-view-calendar" style="display:none;">
         <div class="page-header">
           <div>
-            <h2 class="page-title">📅 Kalendar</h2>
-            <p class="page-subtitle">Oyni tanlang → kunni tanlang → o'sha kundagi postlar havolasi</p>
+            <h2 class="page-title">📊 Umumiy ma'lumot</h2>
+            <p class="page-subtitle">Hududni va oyni tanlang → kunni tanlang → o'sha kundagi postlar havolasi</p>
           </div>
         </div>
         <div id="calendar-content"></div>
@@ -1212,20 +1209,36 @@ function renderGrowthChart() {
 let calYear = new Date().getFullYear();
 let calMonth = 0;
 let calSelectedDay = null;
+let calRegion = '';
+let calLevel = 'months';
 const CAL_MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
 const CAL_WEEKDAYS = ['Du','Se','Cho','Pa','Ju','Sha','Yak'];
 
-function postsOnDate(dateStr) { return posts.filter(p => p.date === dateStr); }
+function calFilteredPosts() { return calRegion ? posts.filter(p => p.region === calRegion) : posts; }
+function postsOnDate(dateStr) { return calFilteredPosts().filter(p => p.date === dateStr); }
 function postCountInMonth(year, monthIdx) {
-  return posts.filter(p => {
+  return calFilteredPosts().filter(p => {
     const d = p.date || '';
     return d.slice(0,4) === String(year) && (parseInt(d.slice(5,7),10) - 1) === monthIdx;
   }).length;
 }
 
+function calRegionSelector() {
+  return `<select class="select" id="cal-region" onchange="calSetRegion(this.value)" style="max-width:300px;">
+    <option value="">🌐 Barcha hududlar</option>
+    ${REGIONS.map(r => `<option value="${esc(r)}" ${calRegion === r ? 'selected' : ''}>${esc(r)}</option>`).join('')}
+  </select>`;
+}
+
+function calSetRegion(v) {
+  calRegion = v;
+  if (calLevel === 'days') renderCalDays(); else renderCalMonths();
+}
+
 function renderCalendar() { calSelectedDay = null; renderCalMonths(); }
 
 function renderCalMonths() {
+  calLevel = 'months';
   const c = document.getElementById('calendar-content');
   const cards = CAL_MONTHS.map((m, i) => {
     const cnt = postCountInMonth(calYear, i);
@@ -1242,7 +1255,7 @@ function renderCalMonths() {
         <span class="year">${calYear}</span>
         <button class="icon-btn" onclick="calChangeYear(1)">›</button>
       </div>
-      <span style="color:var(--ink-2); font-size:13px;">Oyni tanlang</span>
+      ${calRegionSelector()}
     </div>
     <div class="cal-months">${cards}</div>
   `;
@@ -1253,6 +1266,7 @@ function calChangeYear(delta) { calYear += delta; renderCalMonths(); }
 function openCalMonth(monthIdx) { calMonth = monthIdx; calSelectedDay = null; renderCalDays(); }
 
 function renderCalDays() {
+  calLevel = 'days';
   const c = document.getElementById('calendar-content');
   const year = calYear, month = calMonth;
   const first = new Date(year, month, 1);
@@ -1280,7 +1294,7 @@ function renderCalDays() {
     <div class="cal-bar">
       <button class="btn btn-secondary btn-sm" onclick="renderCalMonths()">← Oylar</button>
       <span style="font-size:18px; font-weight:800;">${CAL_MONTHS[month]} ${year}</span>
-      <span></span>
+      ${calRegionSelector()}
     </div>
     <div class="cal-grid">${cells}</div>
     <div class="cal-post-list" id="cal-post-list"></div>
