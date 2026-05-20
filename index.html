@@ -226,6 +226,44 @@ body {
 .platform-sub { font-size: 12px; color: var(--ink-2); margin-top: 8px; }
 @media (max-width: 480px) { .platform-grid { grid-template-columns: 1fr; } }
 
+/* Calendar */
+.cal-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; gap:12px; flex-wrap:wrap; }
+.cal-year-nav { display:flex; align-items:center; gap:10px; }
+.cal-year-nav .year { font-size:20px; font-weight:800; min-width:70px; text-align:center; }
+.cal-months { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.cal-month-card {
+  background:white; border:2px solid var(--border); border-radius:var(--radius);
+  padding:18px 14px; text-align:center; cursor:pointer; transition:all 0.15s;
+}
+.cal-month-card:hover { border-color:var(--primary); transform:translateY(-2px); box-shadow:var(--shadow); }
+.cal-month-card .mname { font-size:15px; font-weight:700; margin-bottom:8px; }
+.cal-month-card .mcount { font-size:24px; font-weight:800; color:var(--primary); }
+.cal-month-card .mlabel { font-size:11px; color:var(--ink-2); text-transform:uppercase; letter-spacing:0.04em; }
+.cal-month-card.empty .mcount { color:var(--ink-3); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+.cal-weekday { text-align:center; font-size:11px; font-weight:700; color:var(--ink-2); text-transform:uppercase; padding:6px 0; }
+.cal-day {
+  aspect-ratio:1; border:1.5px solid var(--border); border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:14px; color:var(--ink-2); position:relative;
+}
+.cal-day.blank { border:none; }
+.cal-day.has-posts { background:var(--primary); color:white; border-color:var(--primary); cursor:pointer; font-weight:700; }
+.cal-day.has-posts:hover { background:var(--primary-dark); }
+.cal-day.has-posts.selected { background:var(--accent); border-color:var(--accent); color:white; }
+.cal-day .daynum { font-size:15px; font-weight:700; }
+.cal-day .dcount { font-size:10px; opacity:0.9; }
+.cal-day.today { border-color:var(--primary); border-width:2px; }
+.cal-post-list { margin-top:18px; }
+.cal-post-card {
+  background:white; border:1.5px solid var(--border); border-radius:var(--radius);
+  padding:16px; margin-bottom:10px;
+}
+.cal-post-card h4 { font-size:15px; font-weight:700; margin-bottom:4px; }
+.cal-post-card .meta { font-size:12px; color:var(--ink-2); margin-bottom:10px; }
+.cal-post-links { display:flex; gap:8px; flex-wrap:wrap; }
+@media (max-width: 640px) { .cal-months { grid-template-columns:repeat(2,1fr); } }
+
 /* Card */
 .card {
   background: white; border-radius: var(--radius); padding: 20px;
@@ -494,6 +532,9 @@ body {
         <button class="sidebar-item active" data-view="admin-dashboard" onclick="showAdminView('dashboard')">
           <span>📊</span> Boshqaruv paneli
         </button>
+        <button class="sidebar-item" data-view="admin-calendar" onclick="showAdminView('calendar')">
+          <span>📅</span> Kalendar
+        </button>
         <button class="sidebar-item" data-view="admin-all" onclick="showAdminView('all')">
           <span>📋</span> Barcha postlar
         </button>
@@ -555,6 +596,17 @@ body {
           </div>
         </div>
         <div id="pending-list"></div>
+      </div>
+
+      <!-- CALENDAR VIEW -->
+      <div class="admin-view" id="admin-view-calendar" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">📅 Kalendar</h2>
+            <p class="page-subtitle">Oyni tanlang → kunni tanlang → o'sha kundagi postlar havolasi</p>
+          </div>
+        </div>
+        <div id="calendar-content"></div>
       </div>
 
       <!-- ALL POSTS VIEW -->
@@ -997,6 +1049,7 @@ function showAdminView(view) {
   else if (view === 'all') renderAllPosts();
   else if (view === 'reps') renderReps();
   else if (view === 'stats') renderStats();
+  else if (view === 'calendar') renderCalendar();
 }
 
 function updateBadges() {
@@ -1151,6 +1204,111 @@ function renderGrowthChart() {
       }
     }
   });
+}
+
+// ====================================================================
+// CALENDAR
+// ====================================================================
+let calYear = new Date().getFullYear();
+let calMonth = 0;
+let calSelectedDay = null;
+const CAL_MONTHS = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+const CAL_WEEKDAYS = ['Du','Se','Cho','Pa','Ju','Sha','Yak'];
+
+function postsOnDate(dateStr) { return posts.filter(p => p.date === dateStr); }
+function postCountInMonth(year, monthIdx) {
+  return posts.filter(p => {
+    const d = p.date || '';
+    return d.slice(0,4) === String(year) && (parseInt(d.slice(5,7),10) - 1) === monthIdx;
+  }).length;
+}
+
+function renderCalendar() { calSelectedDay = null; renderCalMonths(); }
+
+function renderCalMonths() {
+  const c = document.getElementById('calendar-content');
+  const cards = CAL_MONTHS.map((m, i) => {
+    const cnt = postCountInMonth(calYear, i);
+    return `<div class="cal-month-card ${cnt === 0 ? 'empty' : ''}" onclick="openCalMonth(${i})">
+      <div class="mname">${m}</div>
+      <div class="mcount">${cnt}</div>
+      <div class="mlabel">post</div>
+    </div>`;
+  }).join('');
+  c.innerHTML = `
+    <div class="cal-bar">
+      <div class="cal-year-nav">
+        <button class="icon-btn" onclick="calChangeYear(-1)">‹</button>
+        <span class="year">${calYear}</span>
+        <button class="icon-btn" onclick="calChangeYear(1)">›</button>
+      </div>
+      <span style="color:var(--ink-2); font-size:13px;">Oyni tanlang</span>
+    </div>
+    <div class="cal-months">${cards}</div>
+  `;
+}
+
+function calChangeYear(delta) { calYear += delta; renderCalMonths(); }
+
+function openCalMonth(monthIdx) { calMonth = monthIdx; calSelectedDay = null; renderCalDays(); }
+
+function renderCalDays() {
+  const c = document.getElementById('calendar-content');
+  const year = calYear, month = calMonth;
+  const first = new Date(year, month, 1);
+  const startWeekday = (first.getDay() + 6) % 7; // Dushanba = 0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = todayISO();
+
+  let cells = CAL_WEEKDAYS.map(w => `<div class="cal-weekday">${w}</div>`).join('');
+  for (let i = 0; i < startWeekday; i++) cells += `<div class="cal-day blank"></div>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const cnt = postsOnDate(dateStr).length;
+    const cls = ['cal-day'];
+    if (cnt > 0) cls.push('has-posts');
+    if (dateStr === todayStr) cls.push('today');
+    if (dateStr === calSelectedDay) cls.push('selected');
+    const click = cnt > 0 ? `onclick="selectCalDay('${dateStr}')"` : '';
+    cells += `<div class="${cls.join(' ')}" ${click}>
+      <span class="daynum">${d}</span>
+      ${cnt > 0 ? `<span class="dcount">${cnt} post</span>` : ''}
+    </div>`;
+  }
+
+  c.innerHTML = `
+    <div class="cal-bar">
+      <button class="btn btn-secondary btn-sm" onclick="renderCalMonths()">← Oylar</button>
+      <span style="font-size:18px; font-weight:800;">${CAL_MONTHS[month]} ${year}</span>
+      <span></span>
+    </div>
+    <div class="cal-grid">${cells}</div>
+    <div class="cal-post-list" id="cal-post-list"></div>
+  `;
+  if (calSelectedDay) renderCalPosts(calSelectedDay);
+}
+
+function selectCalDay(dateStr) { calSelectedDay = dateStr; renderCalDays(); }
+
+function renderCalPosts(dateStr) {
+  const list = document.getElementById('cal-post-list');
+  if (!list) return;
+  const dayPosts = postsOnDate(dateStr);
+  if (dayPosts.length === 0) { list.innerHTML = `<div class="empty-msg">Bu kunda post yo'q</div>`; return; }
+  list.innerHTML = `<h3 style="font-size:16px; font-weight:800; margin-bottom:12px;">📌 ${fmtDate(dateStr)} — ${dayPosts.length} ta post</h3>` +
+    dayPosts.map(p => `
+      <div class="cal-post-card">
+        <h4>${esc(p.title || '—')}</h4>
+        <div class="meta">${esc(p.repName || '')} · ${esc(p.region || '')}${p.category ? ' · ' + esc(p.category) : ''}</div>
+        <div class="cal-post-links">
+          ${p.telegramUrl ? `<a href="${esc(p.telegramUrl)}" target="_blank" class="link-badge tg" style="padding:8px 14px; font-size:13px;">📱 Telegram</a>` : ''}
+          ${p.instagramUrl ? `<a href="${esc(p.instagramUrl)}" target="_blank" class="link-badge ig" style="padding:8px 14px; font-size:13px;">📷 Instagram</a>` : ''}
+          ${p.facebookUrl ? `<a href="${esc(p.facebookUrl)}" target="_blank" class="link-badge fb" style="padding:8px 14px; font-size:13px;">👥 Facebook</a>` : ''}
+          ${(!p.telegramUrl && !p.instagramUrl && !p.facebookUrl) ? `<span style="color:var(--ink-3); font-size:13px;">Havola kiritilmagan</span>` : ''}
+          <button class="btn btn-secondary btn-sm" onclick="openReview('${p.id}')">📋 Batafsil</button>
+        </div>
+      </div>
+    `).join('');
 }
 
 function renderPending() {
