@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Targ'ibot Markazi — Hududiy Monitoring</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f1f5f9;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --ink: #0f172a;
+  --ink-2: #64748b;
+  --ink-3: #94a3b8;
+  --primary: #0d9488;
+  --primary-light: #14b8a6;
+  --primary-dark: #0f766e;
+  --header: #0f172a;
+  --success: #10b981;
+  --success-bg: #d1fae5;
+  --danger: #ef4444;
+  --danger-bg: #fee2e2;
+  --warning: #f59e0b;
+  --warning-bg: #fef3c7;
+  --info: #3b82f6;
+  --info-bg: #dbeafe;
+  --shadow: 0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04);
+  --shadow-lg: 0 10px 25px -5px rgba(15,23,42,0.1), 0 8px 10px -6px rgba(15,23,42,0.05);
+  --radius: 12px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--ink); min-height: 100vh;
+  font-size: 14px; line-height: 1.5;
+}
+
+/* Screens */
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* ============ LOGIN ============ */
+#login-screen.active {
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0d9488 150%);
+  padding: 20px;
+}
+.login-card {
+  background: white; border-radius: 16px; padding: 40px 32px;
+  max-width: 420px; width: 100%; box-shadow: var(--shadow-lg);
+}
+.login-logo {
+  text-align: center; margin-bottom: 28px;
+}
+.login-logo .badge-org {
+  display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white; padding: 6px 14px; border-radius: 100px;
+  font-weight: 700; font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 14px;
+}
+.login-logo h1 {
+  font-size: 26px; font-weight: 800; color: var(--ink);
+  letter-spacing: -0.02em; margin-bottom: 6px;
+}
+.login-logo p { color: var(--ink-2); font-size: 14px; }
+
+.tab-bar {
+  display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--bg); border-radius: 100px; padding: 4px;
+  margin-bottom: 24px;
+}
+.tab-bar button {
+  padding: 10px; border: none; background: transparent;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  color: var(--ink-2); border-radius: 100px; cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-bar button.active {
+  background: white; color: var(--ink);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.form-group { margin-bottom: 16px; }
+.form-group label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: var(--ink); margin-bottom: 6px;
+}
+.input {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-family: inherit; font-size: 14px; background: white;
+  transition: border 0.15s;
+}
+.input:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13,148,136,0.1);
+}
+.select { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; background: white; cursor: pointer; }
+.textarea { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 14px; resize: vertical; min-height: 80px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border: none; border-radius: 10px;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: white; color: var(--ink); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--ink-3); }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-warning { background: var(--warning); color: white; }
+.btn-full { width: 100%; }
+.btn-lg { padding: 14px 24px; font-size: 15px; }
+.btn-sm { padding: 7px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ============ APP LAYOUT ============ */
+.app-header {
+  background: var(--header); color: white;
+  padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  position: sticky; top: 0; z-index: 100;
+}
+.app-logo { display: flex; align-items: center; gap: 14px; }
+.app-logo-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 18px;
+}
+.app-logo-text h1 { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.app-logo-text p { font-size: 11px; color: #cbd5e1; }
+.app-header-actions { display: flex; align-items: center; gap: 12px; }
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 12px 6px 6px; background: rgba(255,255,255,0.1);
+  border-radius: 100px; font-size: 13px;
+}
+.user-chip-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--primary); display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px;
+}
+.logout-btn {
+  background: rgba(239,68,68,0.2); color: #fecaca;
+  border: none; padding: 7px 14px; border-radius: 100px;
+  font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.logout-btn:hover { background: rgba(239,68,68,0.3); }
+
+.app-body { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 66px); }
+.sidebar {
+  background: white; border-right: 1px solid var(--border);
+  padding: 16px 12px;
+}
+.sidebar-section { margin-bottom: 18px; }
+.sidebar-label {
+  font-size: 10px; font-weight: 700; color: var(--ink-3);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  padding: 8px 12px;
+}
+.sidebar-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer;
+  font-size: 14px; font-weight: 500; color: var(--ink-2);
+  transition: all 0.15s; border: none; background: transparent;
+  width: 100%; text-align: left; font-family: inherit;
+}
+.sidebar-item:hover { background: var(--bg); color: var(--ink); }
+.sidebar-item.active {
+  background: linear-gradient(90deg, rgba(13,148,136,0.1), transparent);
+  color: var(--primary-dark); font-weight: 700;
+  border-left: 3px solid var(--primary); padding-left: 9px;
+}
+.sidebar-item .badge-num {
+  margin-left: auto; background: var(--danger); color: white;
+  padding: 2px 7px; border-radius: 100px; font-size: 10px; font-weight: 800;
+}
+
+.main-content { padding: 24px; overflow-x: auto; }
+
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+.page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.page-subtitle { color: var(--ink-2); font-size: 14px; margin-top: 4px; }
+
+/* Stats Cards */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: white; padding: 18px; border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.stat-card .label {
+  font-size: 12px; font-weight: 600; color: var(--ink-2);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+}
+.stat-card .value { font-size: 28px; font-weight: 800; color: var(--ink); }
+.stat-card .change { font-size: 12px; color: var(--ink-2); margin-top: 4px; }
+.stat-card.success .value { color: var(--success); }
+.stat-card.danger .value { color: var(--danger); }
+.stat-card.warning .value { color: var(--warning); }
+.stat-card.primary .value { color: var(--primary); }
+
+/* Platform cards */
+.platform-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; margin-bottom: 24px;
+}
+.platform-card {
+  background: white; padding: 18px; border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+.platform-head { font-size: 15px; font-weight: 800; margin-bottom: 10px; }
+.platform-main { font-size: 30px; font-weight: 800; color: var(--ink); line-height: 1; }
+.platform-sub { font-size: 12px; color: var(--ink-2); margin-top: 8px; }
+@media (max-width: 480px) { .platform-grid { grid-template-columns: 1fr; } }
+
+/* Card */
+.card {
+  background: white; border-radius: var(--radius); padding: 20px;
+  border: 1px solid var(--border); margin-bottom: 18px;
+}
+.card-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.card-title { font-size: 16px; font-weight: 700; }
+
+/* Filters */
+.filter-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
+}
+.filter-bar .input, .filter-bar .select {
+  width: auto; flex: 0 1 200px; padding: 9px 12px; font-size: 13px;
+}
+.search-box { flex: 1 1 240px !important; position: relative; }
+.search-box .input { padding-left: 38px; width: 100%; }
+.search-box::before {
+  content: '🔍'; position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); pointer-events: none; opacity: 0.5;
+}
+
+/* Table */
+.data-table {
+  width: 100%; background: white; border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.data-table table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  background: var(--bg); padding: 12px 14px;
+  text-align: left; font-size: 11px; font-weight: 700;
+  color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 14px; border-bottom: 1px solid var(--border);
+  font-size: 13px; vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover { background: #fafbfc; }
+
+/* Status Badge */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 100px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.status-badge.pending { background: var(--warning-bg); color: var(--warning); }
+.status-badge.approved { background: var(--success-bg); color: var(--success); }
+.status-badge.rejected { background: var(--danger-bg); color: var(--danger); }
+.status-badge.revision { background: var(--info-bg); color: var(--info); }
+
+/* Rep info */
+.rep-info { display: flex; align-items: center; gap: 10px; }
+.rep-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 12px; flex-shrink: 0;
+}
+.rep-info-text strong { display: block; font-weight: 600; color: var(--ink); }
+.rep-info-text span { font-size: 11px; color: var(--ink-2); }
+
+/* Link badges */
+.link-badges { display: flex; gap: 6px; }
+.link-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; color: white;
+  text-decoration: none;
+}
+.link-badge.tg { background: #229ED9; }
+.link-badge.ig { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); }
+.link-badge.fb { background: #1877F2; }
+
+/* Icon button */
+.icon-btn {
+  background: var(--bg); border: 1px solid var(--border);
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: all 0.15s; padding: 0;
+}
+.icon-btn:hover { background: white; border-color: var(--ink-3); }
+
+/* Modal */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,0.6); z-index: 200;
+  align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+}
+.modal-backdrop.show { display: flex; }
+.modal {
+  background: white; border-radius: 16px; padding: 28px;
+  max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;
+}
+.modal-large { max-width: 800px; }
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 20px; font-weight: 800; }
+.modal-close {
+  background: var(--bg); border: none; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer; font-size: 20px; color: var(--ink-2);
+}
+.modal-footer {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border);
+}
+
+/* Toast */
+.toast-container {
+  position: fixed; top: 80px; right: 20px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: var(--ink); color: white; padding: 14px 20px;
+  border-radius: 10px; box-shadow: var(--shadow-lg);
+  font-size: 14px; font-weight: 500;
+  animation: slideIn 0.3s ease;
+}
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+
+  .welcome-banner {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #422006; padding: 14px 16px; border-radius: 10px;
+    margin-bottom: 20px; font-size: 13px; line-height: 1.5;
+    border-left: 4px solid #f59e0b;
+  }
+  .welcome-banner.first-time {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #064e3b; border-left-color: #10b981;
+  }
+  .welcome-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+  /* Empty state */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--ink-2);
+}
+.empty-state-icon { font-size: 56px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state p { font-size: 15px; margin-bottom: 16px; }
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 12px; }
+.bar-label { width: 180px; font-size: 13px; font-weight: 600; }
+.bar-track { flex: 1; height: 24px; background: var(--bg); border-radius: 8px; overflow: hidden; position: relative; }
+.bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary-light), var(--primary)); transition: width 0.5s; border-radius: 8px; }
+.bar-value { font-size: 13px; font-weight: 700; min-width: 50px; text-align: right; }
+
+/* Review detail */
+.detail-row {
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.detail-row:last-of-type { border-bottom: none; }
+.detail-label { font-size: 11px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.detail-value { font-size: 14px; color: var(--ink); }
+.detail-description { background: var(--bg); padding: 14px; border-radius: 10px; white-space: pre-wrap; font-size: 13px; line-height: 1.6; }
+
+/* Tag chip */
+.tag-chip {
+  display: inline-block; background: var(--info-bg); color: var(--info);
+  padding: 3px 9px; border-radius: 100px; font-size: 11px; font-weight: 600;
+  margin-right: 4px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .app-body { grid-template-columns: 1fr; }
+  .sidebar { border-right: none; border-bottom: 1px solid var(--border); padding: 8px; display: flex; gap: 4px; overflow-x: auto; }
+  .sidebar-section { margin: 0; flex-shrink: 0; }
+  .sidebar-label { display: none; }
+  .sidebar-item { flex-shrink: 0; padding: 8px 14px; font-size: 13px; }
+  .sidebar-item.active { border-left: none; border-bottom: 3px solid var(--primary); }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .data-table { font-size: 12px; overflow-x: auto; display: block; }
+  .data-table table { min-width: 700px; }
+  .main-content { padding: 16px; }
+  .bar-label { width: 130px; font-size: 12px; }
+}
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-card .value { font-size: 22px; }
+  .login-card { padding: 28px 22px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============== LOGIN ============== -->
+<div id="login-screen" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="badge-org">Hududiy Monitoring</span>
+      <h1>Targ'ibot Markazi</h1>
+      <p>Raqamli targ'ibotni muvofiqlashtirish tizimi</p>
+    </div>
+
+    <div id="welcome-banner" style="display:none;"></div>
+
+    <div class="tab-bar">
+      <button id="tab-rep" class="active" onclick="setLoginMode('rep')">Vakil</button>
+      <button id="tab-admin" onclick="setLoginMode('admin')">Administrator</button>
+    </div>
+
+    <div id="rep-login-form">
+      <div class="form-group">
+        <label>Foydalanuvchi nomi</label>
+        <input class="input" id="rep-username" placeholder="masalan: andijon_vakili">
+      </div>
+      <div class="form-group">
+        <label>PIN kod (4 raqam)</label>
+        <input class="input" id="rep-pin" type="password" maxlength="4" inputmode="numeric" placeholder="••••">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="repLogin()">Tizimga kirish →</button>
+      <p style="text-align:center; color: var(--ink-2); font-size: 12px; margin-top: 16px;">
+        Login ma'lumotini administratoringizdan oling
+      </p>
+    </div>
+
+    <div id="admin-login-form" style="display:none;">
+      <div class="form-group" id="admin-pwd-setup-group" style="display:none;">
+        <label>Yangi administrator paroli (kamida 6 belgi)</label>
+        <input class="input" id="admin-new-pwd" type="password" placeholder="Yangi parol o'rnating">
+        <p style="font-size:12px;color:var(--ink-2);margin-top:6px;">⚠️ Birinchi marta kirish — parol o'rnating va eslab qoling</p>
+      </div>
+      <div class="form-group" id="admin-pwd-group">
+        <label>Administrator paroli</label>
+        <input class="input" id="admin-pwd" type="password" placeholder="Parol">
+      </div>
+      <button class="btn btn-primary btn-full btn-lg" onclick="adminLogin()">Kirish →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============== ADMIN APP ============== -->
+<div id="admin-screen" class="screen">
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-icon">T</div>
+      <div class="app-logo-text">
+        <h1>Targ'ibot Markazi</h1>
+        <p>Administrator paneli</p>
+      </div>
+    </div>
+    <div class="app-header-actions">
+      <div class="user-chip">
+        <div class="user-chip-avatar">A</div>
+        Administrator
+      </div>
+      <button class="logout-btn" onclick="logout()">Chiqish</button>
+    </div>
+  </header>
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Asosiy</div>
+        <button class="sidebar-item active" data-view="admin-dashboard" onclick="showAdminView('dashboard')">
+          <span>📊</span> Boshqaruv paneli
+        </button>
+        <button class="sidebar-item" data-view="admin-all" onclick="showAdminView('all')">
+          <span>📋</span> Barcha postlar
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Boshqaruv</div>
+        <button class="sidebar-item" data-view="admin-reps" onclick="showAdminView('reps')">
+          <span>👥</span> Vakillar (14)
+        </button>
+        <button class="sidebar-item" data-view="admin-stats" onclick="showAdminView('stats')">
+          <span>📈</span> Statistika
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Sozlamalar</div>
+        <button class="sidebar-item" data-view="admin-settings" onclick="showAdminView('settings')">
+          <span>⚙️</span> Sozlamalar
+        </button>
+      </div>
+    </aside>
+    <main class="main-content">
+
+      <!-- DASHBOARD VIEW -->
+      <div class="admin-view" id="admin-view-dashboard">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Boshqaruv paneli</h2>
+            <p class="page-subtitle">Umumiy ko'rinish va so'nggi faollik</p>
+          </div>
+        </div>
+        <div class="stats-grid" id="dashboard-stats"></div>
+        <div class="platform-grid" id="dashboard-platforms"></div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📈 Ko'rishlar o'sishi (oylar bo'yicha)</h3>
+          </div>
+          <div id="growth-chart-empty" class="empty-state" style="display:none; padding:30px;">
+            <div class="empty-state-icon">📈</div>
+            <p>Ma'lumot kiritilgandan so'ng o'sish grafigi shu yerda chiqadi</p>
+          </div>
+          <div style="position:relative; height:320px;">
+            <canvas id="growth-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">📊 Hudud bo'yicha bugungi faollik</h3>
+          </div>
+          <div id="dashboard-regional-bars"></div>
+        </div>
+      </div>
+
+      <!-- PENDING VIEW -->
+      <div class="admin-view" id="admin-view-pending" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Ko'rib chiqishni kutmoqda</h2>
+            <p class="page-subtitle">Tasdiqlash yoki rad etish lozim bo'lgan postlar</p>
+          </div>
+        </div>
+        <div id="pending-list"></div>
+      </div>
+
+      <!-- ALL POSTS VIEW -->
+      <div class="admin-view" id="admin-view-all" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Barcha postlar</h2>
+            <p class="page-subtitle">Tarix va to'liq ro'yxat</p>
+          </div>
+          <button class="btn btn-secondary" onclick="exportCSV()">📥 Excel'ga eksport</button>
+        </div>
+        <div class="filter-bar">
+          <div class="search-box">
+            <input class="input" id="search-all" placeholder="Sarlavha, mavzu yoki vakil bo'yicha qidirish..." oninput="renderAllPosts()">
+          </div>
+          <select class="select" id="filter-region" onchange="renderAllPosts()">
+            <option value="">Barcha hududlar</option>
+          </select>
+          <input class="input" type="date" id="filter-date-from" onchange="renderAllPosts()" style="flex:0 1 160px;">
+          <input class="input" type="date" id="filter-date-to" onchange="renderAllPosts()" style="flex:0 1 160px;">
+          <button class="btn btn-secondary btn-sm" onclick="resetFilters()">Tozalash</button>
+        </div>
+        <div id="all-posts-list"></div>
+      </div>
+
+      <!-- REPS VIEW -->
+      <div class="admin-view" id="admin-view-reps" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Hudud vakillari</h2>
+            <p class="page-subtitle">14 hudud uchun vakillarni qo'shing va boshqaring</p>
+          </div>
+          <button class="btn btn-primary" onclick="openRepEditor()">+ Yangi vakil</button>
+        </div>
+        <div id="reps-list"></div>
+      </div>
+
+      <!-- STATS VIEW -->
+      <div class="admin-view" id="admin-view-stats" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Statistika va tahlil</h2>
+            <p class="page-subtitle">Hududlar va vakillar bo'yicha ko'rsatkichlar</p>
+          </div>
+        </div>
+        <div id="stats-content"></div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div class="admin-view" id="admin-view-settings" style="display:none;">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Sozlamalar</h2>
+            <p class="page-subtitle">Tizim sozlamalari va ma'lumotlar boshqaruvi</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">🔐 Parolni o'zgartirish</h3></div>
+          <div class="form-group">
+            <label>Joriy parol</label>
+            <input class="input" type="password" id="current-pwd" style="max-width:300px;">
+          </div>
+          <div class="form-group">
+            <label>Yangi parol</label>
+            <input class="input" type="password" id="new-pwd" style="max-width:300px;">
+          </div>
+          <button class="btn btn-primary" onclick="changePassword()">Saqlash</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">💾 Ma'lumotlarni eksport/import qilish</h3></div>
+          <p style="color: var(--ink-2); margin-bottom: 14px; font-size: 13px;">
+            Barcha ma'lumotni zaxira nusxa sifatida saqlang yoki boshqa qurilmaga ko'chiring
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="exportJSON()">📤 JSON eksport</button>
+            <input type="file" id="import-file" accept=".json" onchange="importJSON(event)" style="display:none;">
+            <button class="btn btn-secondary" onclick="document.getElementById('import-file').click()">📥 JSON import</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3 class="card-title">⚠️ Hammasini o'chirish</h3></div>
+          <p style="color: var(--danger); margin-bottom: 14px; font-size: 13px;">
+            Diqqat: Bu amalni qaytarib bo'lmaydi! Barcha vakillar va postlar o'chiriladi.
+          </p>
+          <button class="btn btn-danger" onclick="resetAll()">🗑️ Hammasini o'chirish</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============== REP APP ============== -->
+<div id="rep-screen" class="screen">
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="app-logo-icon">T</div>
+      <div class="app-logo-text">
+        <h1>Targ'ibot Markazi</h1>
+        <p id="rep-region-label">Vakil paneli</p>
+      </div>
+    </div>
+    <div class="app-header-actions">
+      <div class="user-chip">
+        <div class="user-chip-avatar" id="rep-avatar">V</div>
+        <span id="rep-name-label">Vakil</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Chiqish</button>
+    </div>
+  </header>
+  <div class="main-content" style="max-width: 1100px; margin: auto;">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">Mening postlarim</h2>
+        <p class="page-subtitle">Bugungi va o'tgan kunlarda yuborgan kontent</p>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="openSubmitForm()">+ Yangi post yuborish</button>
+    </div>
+    <div class="stats-grid" id="rep-stats"></div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">📋 Mening postlarim</h3>
+      </div>
+      <div id="rep-posts-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============== MODALS ============== -->
+<div class="modal-backdrop" id="submit-modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">📝 Yangi post yuborish</h2>
+      <button class="modal-close" onclick="closeModal('submit-modal-backdrop')">×</button>
+    </div>
+    <div class="form-group">
+      <label>Sarlavha / Mavzu *</label>
+      <input class="input" id="post-title" placeholder="Masalan: Yoshlar bilan uchrashuv">
+    </div>
+    <div class="form-group">
+      <label>Mazmuni (tavsif)</label>
+      <textarea class="textarea" id="post-description" placeholder="Post haqida qisqacha — nima haqida, kim ishtirok etdi, qanday natijalar..."></textarea>
+    </div>
+    <label style="display:block; font-size:13px; font-weight:600; margin-bottom:8px;">Post havolalari (qaysi platformaga joylangan bo'lsa)</label>
+    <div class="form-group">
+      <label style="font-weight:500;">📱 Telegram havolasi</label>
+      <input class="input" id="post-tg" placeholder="https://t.me/...">
+    </div>
+    <div class="form-group">
+      <label style="font-weight:500;">📷 Instagram havolasi</label>
+      <input class="input" id="post-ig" placeholder="https://instagram.com/p/...">
+    </div>
+    <div class="form-group">
+      <label style="font-weight:500;">👥 Facebook havolasi</label>
+      <input class="input" id="post-fb" placeholder="https://facebook.com/...">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="form-group">
+        <label>Chiqarilgan sana *</label>
+        <input class="input" type="date" id="post-date">
+      </div>
+      <div class="form-group">
+        <label>Toifa</label>
+        <select class="select" id="post-category">
+          <option value="">Tanlang</option>
+          <option value="siyosat">Siyosat</option>
+          <option value="manaviyat">Ma'naviyat</option>
+          <option value="iqtisodiyot">Iqtisodiyot</option>
+          <option value="taʼlim">Ta'lim</option>
+          <option value="sogliqni-saqlash">Sog'liqni saqlash</option>
+          <option value="sport">Sport</option>
+          <option value="madaniyat">Madaniyat</option>
+          <option value="yoshlar">Yoshlar</option>
+          <option value="ayollar">Ayollar</option>
+          <option value="atrof-muhit">Atrof-muhit</option>
+          <option value="boshqa">Boshqa</option>
+        </select>
+      </div>
+    </div>
+    <p style="font-size:12px; color:var(--ink-2); background:var(--bg); padding:10px 12px; border-radius:8px;">
+      ℹ️ Ko'rishlar, layk va kommentlarni administrator har bir platformadan tekshirib kiritadi.
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('submit-modal-backdrop')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="submitPost()">💾 Yuborish</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="review-modal-backdrop">
+  <div class="modal modal-large">
+    <div class="modal-header">
+      <h2 class="modal-title">📋 Postni ko'rib chiqish</h2>
+      <button class="modal-close" onclick="closeModal('review-modal-backdrop')">×</button>
+    </div>
+    <div id="review-modal-content"></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="rep-editor-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="rep-editor-title">+ Yangi vakil</h2>
+      <button class="modal-close" onclick="closeModal('rep-editor-backdrop')">×</button>
+    </div>
+    <div class="form-group">
+      <label>To'liq ism *</label>
+      <input class="input" id="rep-fname" placeholder="Masalan: Karimov Akmal">
+    </div>
+    <div class="form-group">
+      <label>Hudud *</label>
+      <select class="select" id="rep-region"></select>
+    </div>
+    <div class="form-group">
+      <label>Tuman / Shahar</label>
+      <input class="input" id="rep-district" placeholder="Masalan: Andijon shahri">
+    </div>
+    <div class="form-group">
+      <label>Telefon raqami</label>
+      <input class="input" id="rep-phone" placeholder="+998 90 123 45 67">
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <div class="form-group">
+        <label>Foydalanuvchi nomi *</label>
+        <input class="input" id="rep-uname" placeholder="andijon_vakili">
+      </div>
+      <div class="form-group">
+        <label>PIN kod (4 raqam) *</label>
+        <input class="input" id="rep-pin-new" maxlength="4" inputmode="numeric" placeholder="1234">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('rep-editor-backdrop')">Bekor qilish</button>
+      <button class="btn btn-primary" onclick="saveRep()">💾 Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="confirm-modal-backdrop">
+  <div class="modal" style="max-width: 420px;">
+    <div class="modal-header">
+      <h2 class="modal-title" id="confirm-title">Tasdiqlash</h2>
+    </div>
+    <p id="confirm-message" style="color: var(--ink-2); margin-bottom: 20px;"></p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal-backdrop')">Bekor qilish</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Davom etish</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ====================================================================
+// REGIONS DATA
+// ====================================================================
+const REGIONS = [
+  "Qoraqalpog'iston Respublikasi", "Andijon viloyati", "Buxoro viloyati",
+  "Farg'ona viloyati", "Jizzax viloyati", "Xorazm viloyati",
+  "Namangan viloyati", "Navoiy viloyati", "Qashqadaryo viloyati",
+  "Samarqand viloyati", "Sirdaryo viloyati", "Surxondaryo viloyati",
+  "Toshkent viloyati", "Toshkent shahri"
+];
+
+// ====================================================================
+// STORAGE & STATE
+// ====================================================================
+const STORAGE = {
+  ADMIN_PWD: 'tm_admin_pwd',
+  ADMIN_SESSION: 'tm_admin_session',
+  REP_SESSION: 'tm_rep_session',
+  REPS: 'tm_reps',
+  POSTS: 'tm_posts'
+};
+
+let reps = [];
+let posts = [];
+let currentUser = null; // { type: 'admin' | 'rep', ...rep data if rep }
+let editingRepId = null;
+let loginMode = 'rep';
+
+function loadData() {
+  try {
+    reps = JSON.parse(localStorage.getItem(STORAGE.REPS) || '[]');
+    posts = JSON.parse(localStorage.getItem(STORAGE.POSTS) || '[]');
+  } catch (e) { reps = []; posts = []; }
+}
+function saveData() {
+  localStorage.setItem(STORAGE.REPS, JSON.stringify(reps));
+  localStorage.setItem(STORAGE.POSTS, JSON.stringify(posts));
+}
+
+// Simple FNV hash for password
+function hashPwd(text) {
+  const salt = 'TargibotMarkaz_v1';
+  let h = 2166136261 >>> 0;
+  const s = salt + text;
+  for (let round = 0; round < 1500; round++) {
+    for (let i = 0; i < s.length; i++) {
+      h = ((h ^ s.charCodeAt(i)) * 16777619) >>> 0;
+    }
+  }
+  return 'v1:' + h.toString(16);
+}
+
+// ====================================================================
+// UTILITIES
+// ====================================================================
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const date = new Date(d);
+  return date.toLocaleDateString('uz-UZ', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function fmtDateTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('uz-UZ', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getInitials(name) {
+  return name.split(' ').map(w => w.charAt(0)).join('').slice(0, 2).toUpperCase();
+}
+
+function toast(msg, type = 'default') {
+  const c = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function confirmAction(title, msg, onOk) {
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-message').textContent = msg;
+  const btn = document.getElementById('confirm-ok-btn');
+  btn.onclick = () => { closeModal('confirm-modal-backdrop'); onOk(); };
+  showModal('confirm-modal-backdrop');
+}
+
+// ====================================================================
+// LOGIN
+// ====================================================================
+function setLoginMode(mode) {
+  loginMode = mode;
+  document.getElementById('tab-rep').classList.toggle('active', mode === 'rep');
+  document.getElementById('tab-admin').classList.toggle('active', mode === 'admin');
+  document.getElementById('rep-login-form').style.display = mode === 'rep' ? 'block' : 'none';
+  document.getElementById('admin-login-form').style.display = mode === 'admin' ? 'block' : 'none';
+
+  if (mode === 'admin') {
+    const existing = localStorage.getItem(STORAGE.ADMIN_PWD);
+    document.getElementById('admin-pwd-setup-group').style.display = existing ? 'none' : 'block';
+    document.getElementById('admin-pwd-group').style.display = existing ? 'block' : 'none';
+  }
+}
+
+function adminLogin() {
+  const existing = localStorage.getItem(STORAGE.ADMIN_PWD);
+  if (!existing) {
+    // Setup new password
+    const newPwd = document.getElementById('admin-new-pwd').value;
+    if (newPwd.length < 6) { toast('Parol kamida 6 belgi bo\'lishi kerak', 'error'); return; }
+    localStorage.setItem(STORAGE.ADMIN_PWD, hashPwd(newPwd));
+    toast('Parol o\'rnatildi ✓', 'success');
+    currentUser = { type: 'admin' };
+    sessionStorage.setItem(STORAGE.ADMIN_SESSION, '1');
+    showAdminApp();
+    return;
+  }
+  const pwd = document.getElementById('admin-pwd').value;
+  if (hashPwd(pwd) !== existing) {
+    toast('Parol noto\'g\'ri', 'error');
+    return;
+  }
+  currentUser = { type: 'admin' };
+  sessionStorage.setItem(STORAGE.ADMIN_SESSION, '1');
+  showAdminApp();
+}
+
+function repLogin() {
+  const uname = document.getElementById('rep-username').value.trim();
+  const pin = document.getElementById('rep-pin').value.trim();
+  if (reps.length === 0) {
+    toast("Vakillar hali ro'yxatdan o'tmagan. Avval Administrator vakil yaratsin", 'error');
+    return;
+  }
+  if (!uname || !pin) { toast("Login ma'lumotini to'liq kiriting", 'error'); return; }
+  const rep = reps.find(r => r.username === uname && r.pin === pin && r.active !== false);
+  if (!rep) { toast("Login yoki PIN noto'g'ri", 'error'); return; }
+  currentUser = { type: 'rep', ...rep };
+  sessionStorage.setItem(STORAGE.REP_SESSION, JSON.stringify({ id: rep.id }));
+  showRepApp();
+}
+
+function logout() {
+  currentUser = null;
+  sessionStorage.removeItem(STORAGE.ADMIN_SESSION);
+  sessionStorage.removeItem(STORAGE.REP_SESSION);
+  document.getElementById('rep-username').value = '';
+  document.getElementById('rep-pin').value = '';
+  document.getElementById('admin-pwd').value = '';
+  showScreen('login-screen');
+}
+
+// ====================================================================
+// ADMIN APP
+// ====================================================================
+function showAdminApp() {
+  showScreen('admin-screen');
+  showAdminView('dashboard');
+  updateBadges();
+}
+
+function showAdminView(view) {
+  document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-view="admin-${view}"]`)?.classList.add('active');
+  document.querySelectorAll('.admin-view').forEach(v => v.style.display = 'none');
+  document.getElementById('admin-view-' + view).style.display = 'block';
+  window.scrollTo(0, 0);
+
+  if (view === 'dashboard') renderDashboard();
+  else if (view === 'pending') renderPending();
+  else if (view === 'all') renderAllPosts();
+  else if (view === 'reps') renderReps();
+  else if (view === 'stats') renderStats();
+}
+
+function updateBadges() {
+  const pendingCount = posts.filter(p => p.status === 'pending').length;
+  const badge = document.getElementById('badge-pending');
+  if (badge) {
+    badge.textContent = pendingCount;
+    badge.style.display = pendingCount > 0 ? '' : 'none';
+  }
+}
+
+function renderDashboard() {
+  const stats = document.getElementById('dashboard-stats');
+  const today = todayISO();
+  const todayPosts = posts.filter(p => p.date === today);
+  const pending = posts.filter(p => p.status === 'pending').length;
+  const totalReps = reps.filter(r => r.active !== false).length;
+  const tg = platformTotals('telegram');
+  const ig = platformTotals('instagram');
+  const fb = platformTotals('facebook');
+
+  stats.innerHTML = `
+    <div class="stat-card primary">
+      <div class="label">📅 Bugungi postlar</div>
+      <div class="value">${todayPosts.length}</div>
+      <div class="change">${REGIONS.length} hududdan</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">👥 Vakillar</div>
+      <div class="value">${totalReps}</div>
+      <div class="change">Faol</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">📝 Jami postlar</div>
+      <div class="value">${posts.length}</div>
+      <div class="change">Boshlanishidan beri</div>
+    </div>
+  `;
+
+  // Platform cards
+  const totalViews = tg.views + ig.views + fb.views;
+  const totalLikes = ig.likes + fb.likes;
+  const totalComments = ig.comments + fb.comments;
+  const platformGrid = document.getElementById('dashboard-platforms');
+  if (platformGrid) {
+    platformGrid.innerHTML = `
+      <div class="platform-card platform-card-total" style="border-top:3px solid var(--primary);">
+        <div class="platform-head"><span>📊 Umumiy (barcha platformalar)</span></div>
+        <div class="platform-main" style="color:var(--primary);">${fmtNum(totalViews)}</div>
+        <div class="platform-sub">👁️ jami ko'rishlar · ❤️ ${fmtNum(totalLikes)} · 💬 ${fmtNum(totalComments)}</div>
+      </div>
+      <div class="platform-card" style="border-top:3px solid #229ED9;">
+        <div class="platform-head"><span style="color:#229ED9;">📱 Telegram</span></div>
+        <div class="platform-main">${fmtNum(tg.views)}</div>
+        <div class="platform-sub">👁️ ko'rishlar</div>
+      </div>
+      <div class="platform-card" style="border-top:3px solid #c13584;">
+        <div class="platform-head"><span style="color:#c13584;">📷 Instagram</span></div>
+        <div class="platform-main">${fmtNum(ig.views)}</div>
+        <div class="platform-sub">👁️ ko'rishlar · ❤️ ${fmtNum(ig.likes)} · 💬 ${fmtNum(ig.comments)}</div>
+      </div>
+      <div class="platform-card" style="border-top:3px solid #1877F2;">
+        <div class="platform-head"><span style="color:#1877F2;">👥 Facebook</span></div>
+        <div class="platform-main">${fmtNum(fb.views)}</div>
+        <div class="platform-sub">👁️ ko'rishlar · ❤️ ${fmtNum(fb.likes)} · 💬 ${fmtNum(fb.comments)}</div>
+      </div>
+    `;
+  }
+
+  // Growth chart
+  renderGrowthChart();
+
+  // Regional bars - today
+  const regionBars = document.getElementById('dashboard-regional-bars');
+  const regionCounts = {};
+  REGIONS.forEach(r => regionCounts[r] = 0);
+  todayPosts.forEach(p => { if (regionCounts[p.region] !== undefined) regionCounts[p.region]++; });
+  const max = Math.max(1, ...Object.values(regionCounts));
+  regionBars.innerHTML = `<div class="bar-chart">` +
+    Object.entries(regionCounts).map(([r, c]) => `
+      <div class="bar-row">
+        <div class="bar-label">${esc(r)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(c/max)*100}%"></div></div>
+        <div class="bar-value">${c}</div>
+      </div>
+    `).join('') + `</div>`;
+}
+
+let growthChart = null;
+const UZ_MONTHS = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
+
+function getMonthlyGrowth() {
+  // Oy bo'yicha ko'rishlarni yig'ish
+  const byMonth = {};
+  posts.forEach(p => {
+    const m = (p.date || '').slice(0, 7); // YYYY-MM
+    if (!m || m.length !== 7) return;
+    if (!byMonth[m]) byMonth[m] = { tg: 0, ig: 0, fb: 0 };
+    const s = getStats(p);
+    byMonth[m].tg += num(s.telegram.views);
+    byMonth[m].ig += num(s.instagram.views);
+    byMonth[m].fb += num(s.facebook.views);
+  });
+  const months = Object.keys(byMonth).sort();
+  const labels = [], tg = [], ig = [], fb = [];
+  let ctg = 0, cig = 0, cfb = 0;
+  months.forEach(m => {
+    ctg += byMonth[m].tg; cig += byMonth[m].ig; cfb += byMonth[m].fb;
+    const [y, mo] = m.split('-');
+    labels.push(UZ_MONTHS[parseInt(mo, 10) - 1] + ' ' + y);
+    tg.push(ctg); ig.push(cig); fb.push(cfb);
+  });
+  return { labels, tg, ig, fb, hasData: months.length > 0 };
+}
+
+function renderGrowthChart() {
+  const canvas = document.getElementById('growth-chart');
+  const empty = document.getElementById('growth-chart-empty');
+  if (!canvas || typeof Chart === 'undefined') return;
+  const data = getMonthlyGrowth();
+
+  if (growthChart) { growthChart.destroy(); growthChart = null; }
+
+  if (!data.hasData) {
+    canvas.style.display = 'none';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  if (empty) empty.style.display = 'none';
+
+  growthChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        { label: 'Telegram', data: data.tg, borderColor: '#229ED9', backgroundColor: 'rgba(34,158,217,0.1)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#229ED9', borderWidth: 3 },
+        { label: 'Instagram', data: data.ig, borderColor: '#c13584', backgroundColor: 'rgba(193,53,132,0.08)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#c13584', borderWidth: 3 },
+        { label: 'Facebook', data: data.fb, borderColor: '#1877F2', backgroundColor: 'rgba(24,119,242,0.08)', tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#1877F2', borderWidth: 3 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'Inter', size: 13, weight: '600' }, usePointStyle: true, pointStyle: 'circle', padding: 18 } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.parsed.y.toLocaleString('ru-RU') + ' ko\'rishlar' } }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#eef2f7' }, ticks: { font: { family: 'Inter' }, callback: v => v.toLocaleString('ru-RU') } },
+        x: { grid: { display: false }, ticks: { font: { family: 'Inter' } } }
+      }
+    }
+  });
+}
+
+function renderPending() {
+  const pending = posts.filter(p => p.status === 'pending')
+    .sort((a, b) => b.submittedAt - a.submittedAt);
+  const list = document.getElementById('pending-list');
+  if (pending.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✨</div><p>Hammasi ko'rib chiqilgan!</p></div>`;
+    return;
+  }
+  list.innerHTML = renderPostsTable(pending);
+}
+
+function renderAllPosts() {
+  const search = document.getElementById('search-all')?.value?.toLowerCase() || '';
+  const region = document.getElementById('filter-region')?.value || '';
+  const status = document.getElementById('filter-status')?.value || '';
+  const dateFrom = document.getElementById('filter-date-from')?.value || '';
+  const dateTo = document.getElementById('filter-date-to')?.value || '';
+
+  let filtered = posts.slice();
+  if (search) filtered = filtered.filter(p =>
+    (p.title || '').toLowerCase().includes(search) ||
+    (p.description || '').toLowerCase().includes(search) ||
+    (p.repName || '').toLowerCase().includes(search));
+  if (region) filtered = filtered.filter(p => p.region === region);
+  if (status) filtered = filtered.filter(p => p.status === status);
+  if (dateFrom) filtered = filtered.filter(p => p.date >= dateFrom);
+  if (dateTo) filtered = filtered.filter(p => p.date <= dateTo);
+
+  filtered.sort((a, b) => b.submittedAt - a.submittedAt);
+
+  const list = document.getElementById('all-posts-list');
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><p>Filtr bo'yicha hech narsa topilmadi</p></div>`;
+    return;
+  }
+  list.innerHTML = renderPostsTable(filtered);
+}
+
+function resetFilters() {
+  ['search-all', 'filter-region', 'filter-status', 'filter-date-from', 'filter-date-to'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderAllPosts();
+}
+
+function renderPostsTable(items) {
+  return `<div class="data-table"><table>
+    <thead>
+      <tr>
+        <th>Vakil / Hudud</th>
+        <th>Sarlavha</th>
+        <th>Sana</th>
+        <th>Havolalar</th>
+        <th>📊 Statistika</th>
+        <th>Holat</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map(p => {
+        const statusLabels = { pending: 'Kutilmoqda', approved: 'Tasdiq', rejected: 'Rad', revision: 'Qaytadan' };
+        return `
+        <tr>
+          <td>
+            <div class="rep-info">
+              <div class="rep-avatar">${getInitials(p.repName || "?")}</div>
+              <div class="rep-info-text">
+                <strong>${esc(p.repName || "Noma'lum")}</strong>
+                <span>${esc(p.region || '')}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>${esc(p.title || '—')}</strong>
+            ${p.category ? `<br><span class="tag-chip">${esc(p.category)}</span>` : ''}
+          </td>
+          <td>${fmtDate(p.date)}</td>
+          <td>
+            <div class="link-badges">
+              ${p.telegramUrl ? `<a href="${esc(p.telegramUrl)}" target="_blank" class="link-badge tg">TG</a>` : ''}
+              ${p.instagramUrl ? `<a href="${esc(p.instagramUrl)}" target="_blank" class="link-badge ig">IG</a>` : ''}
+            </div>
+          </td>
+          <td>${renderStatChips(p)}</td>
+          <td><span class="status-badge ${p.status}">${statusLabels[p.status]}</span></td>
+          <td><button class="btn btn-primary btn-sm" onclick="openReview('${p.id}')">Ko'rish</button></td>
+        </tr>
+      `;}).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function fmtNum(n) {
+  const v = parseInt(n, 10);
+  if (!v || isNaN(v)) return '0';
+  return v.toLocaleString('ru-RU');
+}
+
+function renderStatChips(p) {
+  const s = getStats(p);
+  const v = num(s.telegram.views) + num(s.instagram.views) + num(s.facebook.views);
+  const l = num(s.instagram.likes) + num(s.facebook.likes);
+  const c = num(s.instagram.comments) + num(s.facebook.comments);
+  if (!v && !l && !c) return `<span style="color:var(--ink-3); font-size:12px;">—</span>`;
+  return `<div style="display:flex; gap:8px; font-size:12px; white-space:nowrap;">
+    <span title="Jami ko'rishlar (TG+IG+FB)">👁️ ${fmtNum(v)}</span>
+    <span title="Layklar (IG+FB)">❤️ ${fmtNum(l)}</span>
+    <span title="Kommentlar (IG+FB)">💬 ${fmtNum(c)}</span>
+  </div>`;
+}
+
+// ====================================================================
+// REVIEW POST
+// ====================================================================
+function openReview(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  const statusLabels = { pending: 'Kutilmoqda', approved: 'Tasdiqlangan', rejected: 'Rad etilgan', revision: 'Qaytadan' };
+  document.getElementById('review-modal-content').innerHTML = `
+    <div class="detail-row">
+      <div class="detail-label">Vakil</div>
+      <div class="detail-value">
+        <div class="rep-info">
+          <div class="rep-avatar">${getInitials(p.repName || "?")}</div>
+          <div class="rep-info-text">
+            <strong>${esc(p.repName)}</strong>
+            <span>${esc(p.region)}${p.district ? ' · ' + esc(p.district) : ''}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Sarlavha</div>
+      <div class="detail-value" style="font-size:17px; font-weight:600;">${esc(p.title)}</div>
+    </div>
+    ${p.description ? `
+    <div class="detail-row">
+      <div class="detail-label">Mazmuni</div>
+      <div class="detail-description">${esc(p.description)}</div>
+    </div>` : ''}
+    <div class="detail-row">
+      <div class="detail-label">Chiqarilgan sana</div>
+      <div class="detail-value">${fmtDate(p.date)}</div>
+    </div>
+    ${p.category ? `
+    <div class="detail-row">
+      <div class="detail-label">Toifa</div>
+      <div class="detail-value"><span class="tag-chip">${esc(p.category)}</span></div>
+    </div>` : ''}
+    <div class="detail-row">
+      <div class="detail-label">Havolalar — bosing, ochiladi</div>
+      <div class="detail-value" style="display:flex; gap:8px; flex-wrap: wrap;">
+        ${p.telegramUrl ? `<a href="${esc(p.telegramUrl)}" target="_blank" class="link-badge tg" style="padding:8px 14px; font-size:13px;">📱 Telegramda ochish</a>` : ''}
+        ${p.instagramUrl ? `<a href="${esc(p.instagramUrl)}" target="_blank" class="link-badge ig" style="padding:8px 14px; font-size:13px;">📷 Instagramda ochish</a>` : ''}
+        ${p.facebookUrl ? `<a href="${esc(p.facebookUrl)}" target="_blank" class="link-badge fb" style="padding:8px 14px; font-size:13px;">👥 Facebookda ochish</a>` : ''}
+        ${(!p.telegramUrl && !p.instagramUrl && !p.facebookUrl) ? `<span style="color:var(--ink-3);">Havola kiritilmagan</span>` : ''}
+      </div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">📊 Statistika — har platformani ochib, real sonlarni kiriting</div>
+      ${(() => { const st = getStats(p); return `
+      <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px;">
+        <div style="border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px; color:#229ED9;">📱 Telegram <span style="font-weight:400; color:var(--ink-3); font-size:11px;">(faqat ko'rishlar)</span></div>
+          <div style="display:grid; grid-template-columns: 1fr; gap:8px; max-width:240px;">
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">👁️ Ko'rishlar</label>
+              <input class="input" type="number" id="tg-views" value="${esc(st.telegram.views || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+          </div>
+        </div>
+        <div style="border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px; color:#c13584;">📷 Instagram</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">👁️ Ko'rishlar</label>
+              <input class="input" type="number" id="ig-views" value="${esc(st.instagram.views || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">❤️ Layklar</label>
+              <input class="input" type="number" id="ig-likes" value="${esc(st.instagram.likes || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">💬 Kommentlar</label>
+              <input class="input" type="number" id="ig-comments" value="${esc(st.instagram.comments || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+          </div>
+        </div>
+        <div style="border:1.5px solid var(--border); border-radius:10px; padding:12px;">
+          <div style="font-weight:700; font-size:13px; margin-bottom:8px; color:#1877F2;">👥 Facebook</div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">👁️ Ko'rishlar</label>
+              <input class="input" type="number" id="fb-views" value="${esc(st.facebook.views || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">❤️ Layklar</label>
+              <input class="input" type="number" id="fb-likes" value="${esc(st.facebook.likes || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--ink-2); font-weight:700; display:block; margin-bottom:4px;">💬 Kommentlar</label>
+              <input class="input" type="number" id="fb-comments" value="${esc(st.facebook.comments || '')}" placeholder="0" style="padding:8px 10px;">
+            </div>
+          </div>
+        </div>
+      </div>`; })()}
+      <button class="btn btn-secondary btn-sm" style="margin-top:12px;" onclick="saveStats('${p.id}')">💾 Statistikani saqlash</button>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Yuborilgan vaqt</div>
+      <div class="detail-value">${fmtDateTime(p.submittedAt)}</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">Joriy holat</div>
+      <div class="detail-value"><span class="status-badge ${p.status}">${statusLabels[p.status]}</span></div>
+    </div>
+    ${p.adminComment ? `
+    <div class="detail-row">
+      <div class="detail-label">Avvalgi izoh</div>
+      <div class="detail-description">${esc(p.adminComment)}</div>
+    </div>` : ''}
+    <div class="detail-row">
+      <div class="detail-label">Izoh (vakil uchun)</div>
+      <textarea class="textarea" id="review-comment" placeholder="Tasdiq yoki rad etish sababini yozing...">${esc(p.adminComment || '')}</textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('review-modal-backdrop')">Yopish</button>
+      <button class="btn btn-warning" onclick="reviewAction('${p.id}', 'revision')">✏️ Qaytadan</button>
+      <button class="btn btn-danger" onclick="reviewAction('${p.id}', 'rejected')">✗ Rad etish</button>
+      <button class="btn btn-success" onclick="reviewAction('${p.id}', 'approved')">✓ Tasdiqlash</button>
+    </div>
+  `;
+  showModal('review-modal-backdrop');
+}
+
+function readStats(p) {
+  const get = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const st = getStats(p);
+  st.telegram.views = get('tg-views');
+  st.instagram.views = get('ig-views');
+  st.instagram.likes = get('ig-likes');
+  st.instagram.comments = get('ig-comments');
+  st.facebook.views = get('fb-views');
+  st.facebook.likes = get('fb-likes');
+  st.facebook.comments = get('fb-comments');
+}
+
+function saveStats(id) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  readStats(p);
+  saveData();
+  toast('Statistika saqlandi ✓', 'success');
+  const activeView = document.querySelector('.sidebar-item.active')?.dataset.view?.replace('admin-', '');
+  if (activeView) showAdminView(activeView);
+}
+
+function reviewAction(id, newStatus) {
+  const p = posts.find(x => x.id === id);
+  if (!p) return;
+  p.status = newStatus;
+  p.adminComment = document.getElementById('review-comment').value.trim();
+  readStats(p);
+  p.reviewedAt = Date.now();
+  saveData();
+  closeModal('review-modal-backdrop');
+  const msgs = { approved: 'Tasdiqlandi ✓', rejected: 'Rad etildi', revision: 'Qaytadan ishlashga yuborildi' };
+  toast(msgs[newStatus], newStatus === 'approved' ? 'success' : newStatus === 'rejected' ? 'error' : 'default');
+  // Re-render current view
+  const activeView = document.querySelector('.sidebar-item.active')?.dataset.view?.replace('admin-', '');
+  if (activeView) showAdminView(activeView);
+  updateBadges();
+}
+
+// ====================================================================
+// REPS MANAGEMENT
+// ====================================================================
+function renderReps() {
+  const list = document.getElementById('reps-list');
+  if (reps.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><p>Hali vakil qo'shilmagan.<br>14 hudud uchun vakillarni qo'shing.</p>
+      <button class="btn btn-primary" onclick="openRepEditor()">+ Birinchi vakilni qo'shish</button></div>`;
+    return;
+  }
+  // Group by region
+  const grouped = {};
+  reps.forEach(r => {
+    if (!grouped[r.region]) grouped[r.region] = [];
+    grouped[r.region].push(r);
+  });
+
+  list.innerHTML = `<div class="data-table"><table>
+    <thead>
+      <tr>
+        <th>Vakil</th>
+        <th>Hudud / Tuman</th>
+        <th>Login</th>
+        <th>PIN</th>
+        <th>Telefon</th>
+        <th>Postlar</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${reps.map(r => {
+        const postCount = posts.filter(p => p.repId === r.id).length;
+        return `
+        <tr>
+          <td>
+            <div class="rep-info">
+              <div class="rep-avatar">${getInitials(r.name)}</div>
+              <div class="rep-info-text">
+                <strong>${esc(r.name)}</strong>
+                <span>${r.active === false ? "⊘ O'chirilgan" : '✓ Faol'}</span>
+              </div>
+            </div>
+          </td>
+          <td>
+            <strong>${esc(r.region)}</strong><br>
+            <span style="color:var(--ink-2); font-size:11px;">${esc(r.district || '')}</span>
+          </td>
+          <td><code style="background: var(--bg); padding: 3px 8px; border-radius: 6px; font-size: 12px;">${esc(r.username)}</code></td>
+          <td><code style="background: var(--bg); padding: 3px 8px; border-radius: 6px; font-size: 12px;">${esc(r.pin)}</code></td>
+          <td style="font-size:12px;">${esc(r.phone || '—')}</td>
+          <td><strong>${postCount}</strong></td>
+          <td>
+            <button class="icon-btn" onclick="openRepEditor('${r.id}')" title="Tahrirlash">✏️</button>
+            <button class="icon-btn" onclick="deleteRep('${r.id}')" title="O'chirish">🗑️</button>
+          </td>
+        </tr>
+      `;}).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function openRepEditor(id = null) {
+  editingRepId = id;
+  const r = id ? reps.find(x => x.id === id) : null;
+  document.getElementById('rep-editor-title').textContent = r ? 'Vakilni tahrirlash' : '+ Yangi vakil';
+  document.getElementById('rep-fname').value = r?.name || '';
+  document.getElementById('rep-district').value = r?.district || '';
+  document.getElementById('rep-phone').value = r?.phone || '';
+  document.getElementById('rep-uname').value = r?.username || '';
+  document.getElementById('rep-pin-new').value = r?.pin || '';
+  // Populate regions
+  const sel = document.getElementById('rep-region');
+  sel.innerHTML = '<option value="">— Hudud tanlang —</option>' +
+    REGIONS.map(reg => `<option value="${esc(reg)}" ${r?.region === reg ? 'selected' : ''}>${esc(reg)}</option>`).join('');
+  showModal('rep-editor-backdrop');
+}
+
+function saveRep() {
+  const name = document.getElementById('rep-fname').value.trim();
+  const region = document.getElementById('rep-region').value;
+  const username = document.getElementById('rep-uname').value.trim();
+  const pin = document.getElementById('rep-pin-new').value.trim();
+  if (!name || !region || !username || !pin) {
+    toast('Barcha majburiy maydonlarni to\'ldiring', 'error'); return;
+  }
+  if (!/^\d{4}$/.test(pin)) {
+    toast('PIN aniq 4 ta raqam bo\'lishi kerak', 'error'); return;
+  }
+  // Check duplicate username
+  const dup = reps.find(r => r.username === username && r.id !== editingRepId);
+  if (dup) { toast('Bu login allaqachon olingan', 'error'); return; }
+
+  const rep = {
+    id: editingRepId || ('rep_' + Date.now()),
+    name, region,
+    district: document.getElementById('rep-district').value.trim(),
+    phone: document.getElementById('rep-phone').value.trim(),
+    username, pin,
+    active: true,
+    createdAt: editingRepId ? reps.find(r => r.id === editingRepId).createdAt : Date.now()
+  };
+  if (editingRepId) {
+    const idx = reps.findIndex(r => r.id === editingRepId);
+    if (idx >= 0) reps[idx] = rep;
+  } else reps.push(rep);
+  saveData();
+  closeModal('rep-editor-backdrop');
+  renderReps();
+  toast('Vakil saqlandi ✓', 'success');
+}
+
+function deleteRep(id) {
+  const r = reps.find(x => x.id === id);
+  if (!r) return;
+  const postCount = posts.filter(p => p.repId === id).length;
+  confirmAction("O'chirishni tasdiqlang",
+    `"${r.name}" vakilini o'chirmoqchimisiz? Uning ${postCount} ta posti saqlanadi.`,
+    () => {
+      reps = reps.filter(x => x.id !== id);
+      saveData();
+      renderReps();
+      toast("Vakil o'chirildi", 'default');
+    });
+}
+
+// ====================================================================
+// STATISTICS
+// ====================================================================
+function renderStats() {
+  const c = document.getElementById('stats-content');
+  // Region stats
+  const byRegion = {};
+  REGIONS.forEach(r => byRegion[r] = { total: 0, approved: 0, rejected: 0, pending: 0 });
+  posts.forEach(p => {
+    if (!byRegion[p.region]) byRegion[p.region] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+    byRegion[p.region].total++;
+    byRegion[p.region][p.status]++;
+  });
+
+  // Top reps
+  const repStats = reps.map(r => ({
+    ...r,
+    total: posts.filter(p => p.repId === r.id).length,
+    approved: posts.filter(p => p.repId === r.id && p.status === 'approved').length
+  })).sort((a, b) => b.total - a.total);
+
+  // Category stats
+  const byCategory = {};
+  posts.forEach(p => {
+    const cat = p.category || 'belgilanmagan';
+    byCategory[cat] = (byCategory[cat] || 0) + 1;
+  });
+
+  const maxR = Math.max(1, ...Object.values(byRegion).map(v => v.total));
+  const maxC = Math.max(1, ...Object.values(byCategory));
+
+  // Top posts by total views
+  const topByViews = posts.slice()
+    .filter(p => postTotalViews(p) > 0)
+    .sort((a, b) => postTotalViews(b) - postTotalViews(a))
+    .slice(0, 10);
+
+  c.innerHTML = `
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">🔥 Eng ko'p ko'rilgan postlar (TOP 10)</h3></div>
+      ${topByViews.length === 0 ? `<div class="empty-state" style="padding:30px;"><div class="empty-state-icon">📊</div><p>Hali statistika kiritilmagan</p></div>` : `
+      <div class="data-table"><table>
+        <thead><tr><th>O'rin</th><th>Sarlavha</th><th>Vakil / Hudud</th><th>👁️ Jami ko'rishlar</th><th>❤️ Layk</th><th>💬 Komment</th><th>Havola</th></tr></thead>
+        <tbody>
+          ${topByViews.map((p, i) => { const s = getStats(p); return `
+            <tr>
+              <td><strong>#${i+1}</strong></td>
+              <td><strong>${esc(p.title || '—')}</strong></td>
+              <td style="font-size:12px;">${esc(p.repName || '')}<br><span style="color:var(--ink-2);">${esc(p.region || '')}</span></td>
+              <td><strong style="color:var(--primary);">${fmtNum(postTotalViews(p))}</strong></td>
+              <td>${fmtNum(num(s.instagram.likes) + num(s.facebook.likes))}</td>
+              <td>${fmtNum(num(s.instagram.comments) + num(s.facebook.comments))}</td>
+              <td><div class="link-badges">
+                ${p.telegramUrl ? `<a href="${esc(p.telegramUrl)}" target="_blank" class="link-badge tg">TG</a>` : ''}
+                ${p.instagramUrl ? `<a href="${esc(p.instagramUrl)}" target="_blank" class="link-badge ig">IG</a>` : ''}
+                ${p.facebookUrl ? `<a href="${esc(p.facebookUrl)}" target="_blank" class="link-badge fb">FB</a>` : ''}
+              </div></td>
+            </tr>
+          `;}).join('')}
+        </tbody>
+      </table></div>`}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">📍 Hudud bo'yicha postlar (jami)</h3></div>
+      <div class="bar-chart">
+        ${Object.entries(byRegion).sort((a,b) => b[1].total - a[1].total).map(([r, v]) => `
+          <div class="bar-row">
+            <div class="bar-label">${esc(r)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(v.total/maxR)*100}%"></div>
+            </div>
+            <div class="bar-value">${v.total}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">🏆 Eng faol vakillar</h3></div>
+      <div class="data-table"><table>
+        <thead><tr><th>O'rin</th><th>Vakil</th><th>Hudud</th><th>Jami</th><th>Tasdiqlangan</th><th>Foiz</th></tr></thead>
+        <tbody>
+          ${repStats.slice(0, 14).map((r, i) => `
+            <tr>
+              <td><strong>#${i+1}</strong></td>
+              <td>
+                <div class="rep-info">
+                  <div class="rep-avatar">${getInitials(r.name)}</div>
+                  <strong>${esc(r.name)}</strong>
+                </div>
+              </td>
+              <td>${esc(r.region)}</td>
+              <td><strong>${r.total}</strong></td>
+              <td>${r.approved}</td>
+              <td>${r.total > 0 ? Math.round(r.approved/r.total*100) : 0}%</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">🏷️ Toifalar bo'yicha</h3></div>
+      <div class="bar-chart">
+        ${Object.entries(byCategory).sort((a,b) => b[1] - a[1]).map(([cat, n]) => `
+          <div class="bar-row">
+            <div class="bar-label">${esc(cat)}</div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width:${(n/maxC)*100}%"></div>
+            </div>
+            <div class="bar-value">${n}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ====================================================================
+// EXPORT/IMPORT
+// ====================================================================
+function exportCSV() {
+  const rows = [['Sana','Hudud','Tuman','Vakil','Sarlavha','Mazmun','Toifa',
+    'Telegram URL','TG ko\'rishlar',
+    'Instagram URL','IG ko\'rishlar','IG layk','IG komment',
+    'Facebook URL','FB ko\'rishlar','FB layk','FB komment',
+    'Jami ko\'rishlar','Holat','Izoh','Yuborilgan','Ko\'rib chiqilgan']];
+  posts.forEach(p => {
+    const s = getStats(p);
+    rows.push([
+      p.date || '', p.region || '', p.district || '', p.repName || '',
+      p.title || '', p.description || '', p.category || '',
+      p.telegramUrl || '', s.telegram.views || '',
+      p.instagramUrl || '', s.instagram.views || '', s.instagram.likes || '', s.instagram.comments || '',
+      p.facebookUrl || '', s.facebook.views || '', s.facebook.likes || '', s.facebook.comments || '',
+      postTotalViews(p) || '',
+      p.status || '', p.adminComment || '',
+      p.submittedAt ? new Date(p.submittedAt).toLocaleString('uz-UZ') : '',
+      p.reviewedAt ? new Date(p.reviewedAt).toLocaleString('uz-UZ') : ''
+    ]);
+  });
+  // UTF-8 BOM for Excel
+  const csv = '\uFEFF' + rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `targibot-postlar-${todayISO()}.csv`;
+  a.click();
+  toast('CSV fayl yuklab olindi ✓', 'success');
+}
+
+function exportJSON() {
+  const data = { version: 1, exportedAt: new Date().toISOString(), reps, posts };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `targibot-zaxira-${todayISO()}.json`;
+  a.click();
+  toast('JSON eksport qilindi ✓', 'success');
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      confirmAction('Import qilishni tasdiqlang',
+        `Faylda ${data.reps?.length || 0} ta vakil va ${data.posts?.length || 0} ta post bor. Hozirgi ma'lumotlar o'rniga yoziladi!`,
+        () => {
+          if (Array.isArray(data.reps)) reps = data.reps;
+          if (Array.isArray(data.posts)) posts = data.posts;
+          saveData();
+          toast('Import qilindi ✓', 'success');
+          showAdminView('dashboard');
+        });
+    } catch (err) {
+      toast('Faylni o\'qib bo\'lmadi: ' + err.message, 'error');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function changePassword() {
+  const cur = document.getElementById('current-pwd').value;
+  const nw = document.getElementById('new-pwd').value;
+  if (hashPwd(cur) !== localStorage.getItem(STORAGE.ADMIN_PWD)) {
+    toast('Joriy parol noto\'g\'ri', 'error'); return;
+  }
+  if (nw.length < 6) { toast('Yangi parol kamida 6 belgi bo\'lishi kerak', 'error'); return; }
+  localStorage.setItem(STORAGE.ADMIN_PWD, hashPwd(nw));
+  document.getElementById('current-pwd').value = '';
+  document.getElementById('new-pwd').value = '';
+  toast('Parol yangilandi ✓', 'success');
+}
+
+function resetAll() {
+  confirmAction("Hammasini o'chirish",
+    "Bu amalni qaytarib bo'lmaydi! Barcha vakillar va postlar abadiy o'chiriladi.",
+    () => {
+      reps = []; posts = [];
+      saveData();
+      toast("Hammasi o'chirildi", 'default');
+      showAdminView('dashboard');
+    });
+}
+
+// ====================================================================
+// REP APP
+// ====================================================================
+function showRepApp() {
+  showScreen('rep-screen');
+  document.getElementById('rep-name-label').textContent = currentUser.name;
+  document.getElementById('rep-region-label').textContent = currentUser.region;
+  document.getElementById('rep-avatar').textContent = getInitials(currentUser.name);
+  renderRepDashboard();
+}
+
+function renderRepDashboard() {
+  const myPosts = posts.filter(p => p.repId === currentUser.id);
+  const today = todayISO();
+  const todayPosts = myPosts.filter(p => p.date === today);
+  document.getElementById('rep-stats').innerHTML = `
+    <div class="stat-card primary">
+      <div class="label">📅 Bugungi</div>
+      <div class="value">${todayPosts.length}</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="label">⏳ Kutilmoqda</div>
+      <div class="value">${myPosts.filter(p => p.status === 'pending').length}</div>
+    </div>
+    <div class="stat-card success">
+      <div class="label">✓ Tasdiqlangan</div>
+      <div class="value">${myPosts.filter(p => p.status === 'approved').length}</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label">✗ Rad etilgan</div>
+      <div class="value">${myPosts.filter(p => p.status === 'rejected').length}</div>
+    </div>
+  `;
+  const sorted = myPosts.sort((a, b) => b.submittedAt - a.submittedAt);
+  const list = document.getElementById('rep-posts-list');
+  if (sorted.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📝</div><p>Hali post yubormagansiz</p>
+      <button class="btn btn-primary" onclick="openSubmitForm()">+ Birinchi postni yuborish</button></div>`;
+    return;
+  }
+  const statusLabels = { pending: 'Kutilmoqda', approved: 'Tasdiqlangan', rejected: 'Rad etilgan', revision: 'Qaytadan' };
+  list.innerHTML = `<div class="data-table"><table>
+    <thead><tr><th>Sarlavha</th><th>Sana</th><th>Havolalar</th><th>📊 Statistika</th><th>Holat</th><th>Izoh</th></tr></thead>
+    <tbody>
+      ${sorted.map(p => `
+        <tr>
+          <td><strong>${esc(p.title)}</strong>${p.category ? `<br><span class="tag-chip">${esc(p.category)}</span>` : ''}</td>
+          <td>${fmtDate(p.date)}</td>
+          <td><div class="link-badges">
+            ${p.telegramUrl ? `<a href="${esc(p.telegramUrl)}" target="_blank" class="link-badge tg">TG</a>` : ''}
+            ${p.instagramUrl ? `<a href="${esc(p.instagramUrl)}" target="_blank" class="link-badge ig">IG</a>` : ''}
+          </div></td>
+          <td>${renderStatChips(p)}</td>
+          <td><span class="status-badge ${p.status}">${statusLabels[p.status]}</span></td>
+          <td style="font-size:12px; color:var(--ink-2);">${esc((p.adminComment || '').slice(0, 60))}${p.adminComment && p.adminComment.length > 60 ? '...' : ''}</td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function openSubmitForm() {
+  document.getElementById('post-title').value = '';
+  document.getElementById('post-description').value = '';
+  document.getElementById('post-tg').value = '';
+  document.getElementById('post-ig').value = '';
+  document.getElementById('post-fb').value = '';
+  document.getElementById('post-date').value = todayISO();
+  document.getElementById('post-category').value = '';
+  showModal('submit-modal-backdrop');
+}
+
+function emptyStats() {
+  return {
+    telegram: { views: '' },
+    instagram: { views: '', likes: '', comments: '' },
+    facebook: { views: '', likes: '', comments: '' }
+  };
+}
+
+// Postning stats obyektini xavfsiz olish (eski formatdagi postlar uchun ham)
+function getStats(p) {
+  if (!p.stats) {
+    p.stats = emptyStats();
+    if (p.views) p.stats.telegram.views = p.views; // eski 'views' maydonini telegram'ga ko'chirish
+  }
+  if (!p.stats.telegram) p.stats.telegram = { views: '' };
+  if (!p.stats.instagram) p.stats.instagram = { views: '', likes: '', comments: '' };
+  if (!p.stats.facebook) p.stats.facebook = { views: '', likes: '', comments: '' };
+  return p.stats;
+}
+
+function num(x) { const v = parseInt(x, 10); return isNaN(v) ? 0 : v; }
+
+// Bitta post bo'yicha jami ko'rishlar (3 platforma)
+function postTotalViews(p) {
+  const s = getStats(p);
+  return num(s.telegram.views) + num(s.instagram.views) + num(s.facebook.views);
+}
+
+// Platforma bo'yicha barcha postlardan umumiy yig'indi
+function platformTotals(platform) {
+  let views = 0, likes = 0, comments = 0;
+  posts.forEach(p => {
+    const s = getStats(p)[platform] || {};
+    views += num(s.views); likes += num(s.likes); comments += num(s.comments);
+  });
+  return { views, likes, comments };
+}
+
+function submitPost() {
+  const title = document.getElementById('post-title').value.trim();
+  const date = document.getElementById('post-date').value;
+  if (!title) { toast('Sarlavhani kiriting', 'error'); return; }
+  if (!date) { toast('Sanani tanlang', 'error'); return; }
+
+  const post = {
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    repId: currentUser.id,
+    repName: currentUser.name,
+    region: currentUser.region,
+    district: currentUser.district || '',
+    title,
+    description: document.getElementById('post-description').value.trim(),
+    telegramUrl: document.getElementById('post-tg').value.trim(),
+    instagramUrl: document.getElementById('post-ig').value.trim(),
+    facebookUrl: document.getElementById('post-fb').value.trim(),
+    date,
+    category: document.getElementById('post-category').value,
+    stats: emptyStats(),
+    status: 'pending',
+    adminComment: '',
+    submittedAt: Date.now(),
+    reviewedAt: null
+  };
+  posts.push(post);
+  saveData();
+  closeModal('submit-modal-backdrop');
+  renderRepDashboard();
+  toast('Post yuborildi ✓ Tasdiqlash uchun yuborildi', 'success');
+}
+
+// ====================================================================
+// INIT
+// ====================================================================
+function init() {
+  loadData();
+
+  // Populate region filter dropdown
+  const filterRegion = document.getElementById('filter-region');
+  if (filterRegion) {
+    REGIONS.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r; opt.textContent = r;
+      filterRegion.appendChild(opt);
+    });
+  }
+
+  // Check first-run state and show appropriate welcome
+  const adminPwdExists = !!localStorage.getItem(STORAGE.ADMIN_PWD);
+  const hasReps = reps.length > 0;
+  const banner = document.getElementById('welcome-banner');
+
+  if (!adminPwdExists) {
+    // First-time setup - default to Admin tab
+    setLoginMode('admin');
+    if (banner) {
+      banner.className = 'welcome-banner first-time';
+      banner.innerHTML = `<strong>👋 Xush kelibsiz!</strong>Bu birinchi kirishingiz. Administrator parolini o'rnating va keyin vakillarni qo'shing.`;
+      banner.style.display = 'block';
+    }
+  } else if (!hasReps) {
+    // Admin set up but no reps yet
+    setLoginMode('admin');
+    if (banner) {
+      banner.className = 'welcome-banner';
+      banner.innerHTML = `<strong>⚠️ Vakillar hali qo'shilmagan</strong>Avval Administrator sifatida kirib, "Vakillar" bo'limidan 14 hudud vakillarini qo'shing. Keyin ular o'z login va PIN bilan kirishlari mumkin bo'ladi.`;
+      banner.style.display = 'block';
+    }
+  } else {
+    setLoginMode('rep');
+  }
+
+  // Check existing session
+  const adminSession = sessionStorage.getItem(STORAGE.ADMIN_SESSION);
+  const repSession = sessionStorage.getItem(STORAGE.REP_SESSION);
+
+  if (adminSession === '1') {
+    currentUser = { type: 'admin' };
+    showAdminApp();
+  } else if (repSession) {
+    try {
+      const { id } = JSON.parse(repSession);
+      const rep = reps.find(r => r.id === id);
+      if (rep) {
+        currentUser = { type: 'rep', ...rep };
+        showRepApp();
+      }
+    } catch (e) {}
+  }
+
+  // Close modal on backdrop click
+  document.querySelectorAll('.modal-backdrop').forEach(b => {
+    b.addEventListener('click', e => {
+      if (e.target === b) b.classList.remove('show');
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>
